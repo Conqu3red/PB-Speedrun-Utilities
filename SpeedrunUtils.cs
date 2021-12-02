@@ -1,7 +1,6 @@
 ﻿using System;
 using BepInEx;
 using Logger = BepInEx.Logging.Logger;
-using PolyTechFramework;
 using UnityEngine;
 using HarmonyLib;
 using System.Reflection;
@@ -12,13 +11,9 @@ using UnityEngine.UI;
 namespace SpeedrunUtils
 {
     [BepInPlugin(PluginGuid, PluginName, PluginVersion)]
-    // Specify the mod as a dependency of PTF
-    [BepInDependency(PolyTechMain.PluginGuid, BepInDependency.DependencyFlags.HardDependency)]
-    // This Changes from BaseUnityPlugin to PolyTechMod.
-    // This superclass is functionally identical to BaseUnityPlugin, so existing documentation for it will still work.
-    public class SpeedrunUtils : PolyTechMod
+    public class SpeedrunUtils : BaseUnityPlugin
     {
-        public new const string
+        public const string
             PluginGuid = "polytech.SpeedrunUtils",
             PluginName = "Speedrun Utils",
             PluginVersion = "1.0.0";
@@ -35,7 +30,6 @@ namespace SpeedrunUtils
 			if (instance == null) instance = this;
             // Use this if you wish to make the mod trigger cheat mode ingame.
             // Set this true if your mod effects physics or allows mods that you can't normally do.
-            isCheat = false;
            
             modEnabled = Config.Bind("Speedrun Utils", "Enable/Disable Mod", true, "Enable Mod");
             speed = Config.Bind("Speedrun Utils", "Simulation Speed for calculated time", 3f, "3.0 = 300% speed");
@@ -52,16 +46,8 @@ namespace SpeedrunUtils
 
             updateWindowRect();
 
-            isEnabled = modEnabled.Value;
-
-            modEnabled.SettingChanged += onEnableDisable;
-
             harmony = new Harmony("org.bepinex.plugins.SpeedrunUtils");
             harmony.PatchAll(Assembly.GetExecutingAssembly());
-
-            this.authors = new string[] {"Conqu3red"};
-
-            PolyTechMain.registerMod(this);
         }  
 
 
@@ -72,30 +58,8 @@ namespace SpeedrunUtils
             windowRect.height = windowH.Value;
         }
 
-        public void onEnableDisable(object sender, EventArgs e)
-        {
-            this.isEnabled = modEnabled.Value;
-
-            if (modEnabled.Value)
-            {
-                enableMod();
-            }
-            else
-            {
-                disableMod();
-            }
-        }
-        public override void enableMod() 
-        {
-            modEnabled.Value = true;
-        }
-        public override void disableMod() 
-        {
-            modEnabled.Value = false;
-        }
-
         private bool shouldRun() {
-            return modEnabled.Value && PolyTechMain.ptfInstance.isEnabled;
+            return modEnabled.Value;
         }
 
         private void OnGUI(){
