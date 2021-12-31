@@ -16,14 +16,14 @@ namespace SpeedrunUtils
         public const string
             PluginGuid = "polytech.SpeedrunUtils",
             PluginName = "Speedrun Utils",
-            PluginVersion = "1.0.0";
+            PluginVersion = "1.0.1";
         
         public static SpeedrunUtils instance;
         public static ConfigEntry<bool> modEnabled;
         public static ConfigEntry<float> speed, windowX, windowY, windowW, windowH;
         private Rect windowRect = new Rect(20, 20, 250, 150);
         float frameCount, timeElapsed;
-        long buildTimeStart, buildTimeEnd;
+        float buildTimeStart, buildTimeEnd;
         Harmony harmony;
         void Awake()
         {
@@ -96,17 +96,17 @@ namespace SpeedrunUtils
         static class BuildEnterPatch {
             public static void Prefix(GameState prevState) {
                 if (instance.shouldRun()) {
-                    instance.buildTimeStart = DateTime.Now.Ticks;
+                    instance.buildTimeStart = Time.unscaledTime;
                     instance.buildTimeEnd = 0;
                 }
             }
         }
 
-        [HarmonyPatch(typeof(GameStateBuild), "Exit")]
+        [HarmonyPatch(typeof(GameStateSim), "StartSimulation")]
         static class BuildExitPatch {
-            public static void Prefix(GameState nextState) {
+            public static void Prefix() {
                 if (instance.shouldRun()) {
-                    instance.buildTimeEnd = DateTime.Now.Ticks;
+                    instance.buildTimeEnd = Time.unscaledTime;
                 }
             }
         }
@@ -115,8 +115,9 @@ namespace SpeedrunUtils
         
 
         private void DoUtilsWindow(int windowID) {
-            var tspan = new TimeSpan((buildTimeEnd == 0 ? DateTime.Now.Ticks : buildTimeEnd) - buildTimeStart);
-            GUILayout.Label($"Build time: {tspan.TotalSeconds : 0.00}s");
+            // TODO: switch everything to adding Time.unscaledDeltaTime each frame??
+            var tspan = (buildTimeEnd == 0 ? Time.unscaledTime : buildTimeEnd) - buildTimeStart;
+            GUILayout.Label($"Build time: {tspan : 0.00}s");
             
             GUILayout.Label($"Simulation Frames: {frameCount}");
             GUILayout.Label($"Simulation time (at {Utils.FormatPercentage(speed.Value)}): {timeElapsed / speed.Value : 0.00}s");
