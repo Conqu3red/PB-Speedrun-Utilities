@@ -16,7 +16,7 @@ namespace SpeedrunUtils
         public const string
             PluginGuid = "polytech.SpeedrunUtils",
             PluginName = "Speedrun Utils",
-            PluginVersion = "1.0.1";
+            PluginVersion = "1.0.2";
         
         public static SpeedrunUtils instance;
         public static ConfigEntry<bool> modEnabled;
@@ -50,8 +50,10 @@ namespace SpeedrunUtils
             harmony.PatchAll(Assembly.GetExecutingAssembly());
         }  
 
+        bool imGuiHackyRectUpdatePrevention = false;
 
         void updateWindowRect() {
+            if (imGuiHackyRectUpdatePrevention) return;
             windowRect.x = windowX.Value;
             windowRect.y = windowY.Value;
             windowRect.width = windowW.Value;
@@ -64,11 +66,18 @@ namespace SpeedrunUtils
 
         private void OnGUI(){
             if (shouldRun()) {
-                windowRect = GUI.Window(0, windowRect, DoUtilsWindow, "Speedrun Utils");
+                windowRect = GUI.Window(
+                    GUIUtility.GetControlID(FocusType.Passive),
+                    windowRect,
+                    DoUtilsWindow,
+                    "Speedrun Utils"
+                );
+                imGuiHackyRectUpdatePrevention = true;
                 windowX.Value = windowRect.x;
                 windowY.Value = windowRect.y;
                 windowW.Value = windowRect.width;
                 windowH.Value = windowRect.height;
+                imGuiHackyRectUpdatePrevention = false;
             }
         }
 
@@ -121,7 +130,7 @@ namespace SpeedrunUtils
             
             GUILayout.Label($"Simulation Frames: {frameCount}");
             GUILayout.Label($"Simulation time (at {Utils.FormatPercentage(speed.Value)}): {timeElapsed / speed.Value : 0.00}s");
-            GUI.DragWindow(new Rect(0, 0, 10000, 20));
+            GUI.DragWindow();
         }
     
     }
